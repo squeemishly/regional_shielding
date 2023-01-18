@@ -17,12 +17,13 @@ sub vcl_recv {
 
         set var.shield = table.lookup(region_shielding, server.region);
         if (var.shield == ""){
-          set var.shield = "IAD";
-        }
-
-        /* use origin backend if we're in the shield already */
-        if (var.shield == server.datacenter) {
-          set req.backend = F_HTTPbin;
+          if (server.datacenter == "IAD") {
+            set req.backend = F_HTTPbin;
+          } else {
+            set req.backend = default_shield;
+          }
+        } else if (var.shield == server.datacenter) {
+          set req.backend = default_shield;
         } else {
           set req.backend = table.lookup_backend(site_shield, var.shield, default_shield);
         }
